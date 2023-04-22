@@ -1,0 +1,25 @@
+{
+    "releaseFolder": "C:/Program Files (x86)/Steam/steamapps/common/Sven Co-op/svencoop_addon",
+    "wadToBuild": "lm_tmp.wad",
+    "mdlToBuild": "C:/Users/louis/Documents/mapping/smd",
+    "$mdlFolder": "C:/Users/louis/Documents/mapping/mdl",
+    "studiomdl": "C:/Program Files (x86)/steamapps/common/Half-Life SDK/Model Tools/studiomdl.exe",
+    "mapExporter": "mess",
+    "mess": "C:/Users/louis/Documents/mapping/mess/MESS.exe",
+    "messParams": "-log verbose",
+    "wads": [
+        "lm_tmp.wad",
+        "halflife.wad"
+    ],
+    "resguy": "C:/Users/louis/Documents/mapping/resguy/resguy.exe",
+    "resguyIgnore": "C:/Users/louis/Documents/mapping/resguy/resguy_default_content.txt",
+    "wadmaker": "C:/Users/louis/Documents/mapping/wadspritemaker/WadMaker.exe",
+    "csg": "C:/Users/louis/Documents/mapping/vhlt/hlcsg_x64.exe",
+    "bsp": "C:/Users/louis/Documents/mapping/vhlt/hlbsp_x64.exe",
+    "vis": "C:/Users/louis/Documents/mapping/vhlt/hlvis_x64.exe",
+    "rad": "C:/Users/louis/Documents/mapping/vhlt/hlrad_x64.exe",
+    "csgParams": "",
+    "bspParams": "",
+    "visParams": "",
+    "radParams": ""
+}
