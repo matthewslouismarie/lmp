@@ -13,15 +13,15 @@
 
 param(
     [Parameter(Mandatory = $true, HelpMessage = "The filename of the map, without any extension.")] $mapname,
-    [Parameter(Mandatory = $true, HelpMessage = "The filename of the configuration file.")] $json,
+    [Parameter(Mandatory = $true, HelpMessage = "The filename of the LMP profile.")] $mainprofile,
+    [parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles.")] $profiles,
     [Parameter(HelpMessage = "Whether to compile in prod mode. If missing, defaults to dev mode.")] [switch] $prod,
-    [Parameter(HelpMessage = "Whether to create a new folder for the build. If missing, defaults to generic build folder.")] [switch] $clean,
-    [parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles.")] $profiles
+    [Parameter(HelpMessage = "Whether to create a new folder for the build. If missing, defaults to generic build folder.")] [switch] $clean
 )
 
 Set-StrictMode -Version 3.0
 
-$config = Get-Content -Raw $json | ConvertFrom-Json -AsHashTable
+$config = Get-Content -Raw $mainprofile | ConvertFrom-Json -AsHashTable
 foreach ($p in $profiles) {
     $subconfig = Get-Content -Raw $p | ConvertFrom-Json -AsHashTable
     foreach ($c in $subconfig.GetEnumerator()) {
@@ -35,19 +35,20 @@ New-Item -Name $build -ItemType Directory -Force
 $pwd = Get-Location
 Set-Location $build
 try {
-    if (Test-Path -Path "$($config.radFld)/$mapname.rad") {
-        Copy-Item "$($config.radFld)/$mapname.rad" -Destination .
+    if (Test-Path -Path "$($config.hlradFileFld)/$mapname.rad") {
+        Copy-Item "$($config.hlradFileFld)/$mapname.rad" -Destination .
     }
 
     if ($config.wadToBuild -ne $null) {
-        Invoke-Expression "$($config.wadmaker) -subdirs -nologfile $($config.texturesFld) $($config.wadFld)/$($config.wadToBuild)"
+        Invoke-Expression "$($config.wadmaker) -subdirs -nologfile $($config.wadTexturesFld) $($config.assetFld)/$($config.wadToBuild)"
     }
+
     foreach ($wad in $config.wads) {
-        Copy-Item "$($config.wadFld)/$wad" -Destination .
+        Copy-Item "$($config.assetFld)/$wad" -Destination .
     }
 
     if ($config.assetSprToBuildFld -ne $null) {
-        Invoke-Expression "$($config.spritemaker) -subdirs -nologfile $($config.assetSprToBuildFld) $($config.assetSprFld)"
+        Invoke-Expression "$($config.spritemaker) -subdirs -nologfile $($config.assetSprToBuildFld) $($config.assetFld)/sprites"
     }
 
     # if ($config.studiomdl -ne $null -and $config.mdlToBuild -ne $null) {
@@ -77,10 +78,12 @@ try {
     }
 
     Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) $($config.messParams) $mapname"
-    Invoke-Expression "$($config.csg) $($config.csgParams) $mapname"
-    Invoke-Expression "$($config.bsp) $($config.bspParams) $mapname"
-    Invoke-Expression "$($config.vis) $($config.visParams) $mapname"
-    Invoke-Expression "$($config.rad) $($config.radParams) $mapname"
+    Invoke-Expression "$($config.hlcsg) $($config.hlcsgParams) $mapname"
+    if (!($config.hlcsgParams -Match "-onlyents")) {
+        Invoke-Expression "$($config.hlbsp) $($config.hlbspParams) $mapname"
+        Invoke-Expression "$($config.hlvis) $($config.hlvisParams) $mapname"
+        Invoke-Expression "$($config.hlrad) $($config.hlradParams) $mapname"
+    }
 
     New-Item -Name "release" -ItemType Directory -Force
     Set-Location "release"
@@ -100,12 +103,12 @@ try {
 
     Remove-Item ([regex]::match($config.resguyIgnore, '\w+\.txt$').Groups[0].Value) -Force
 
-    if ($config.assetCfgFld -ne $null) {
-        Copy-Item "$($config.assetCfgFld)/$mapname.cfg" -Destination "maps" -Force
+    if (Test-Path -Path "$($config.assetFld)/maps/$mapname.cfg") {
+        Copy-Item "$($config.assetFld)/maps/$mapname.cfg" -Destination "maps" -Force
     }
 
-    if ($config.assetScriptFld -ne $null) {
-        Copy-Item "$($config.assetScriptFld)" -Destination . -Force -Recurse
+    if (Test-Path -Path "$($config.assetFld)/scripts") {
+        Copy-Item "$($config.assetFld)/scripts" -Destination . -Force -Recurse
     }
 
     if ($config.releaseCopyFld -ne $null) {
