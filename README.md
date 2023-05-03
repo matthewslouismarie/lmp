@@ -12,7 +12,7 @@ You can specify more configuration files if you want to, for instance you could 
 
 > :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
-## Features:
+## Features
 
 The following features can all be used at the same time, or activated separately. It depends on the configuration files passed to LMP.
 
