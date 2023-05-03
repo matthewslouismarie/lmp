@@ -17,7 +17,6 @@ param(
     [Parameter(Mandatory = $true, HelpMessage = "The map filename, excluding any extension (e.g. mymap).")] $mapname,
     [Parameter(Mandatory = $true, HelpMessage = "The path to the main JSON configuration file (e.g. hl.json).")] $mainprofile,
     [parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles (e.g. nores.json, fastcompile.json, etc.).")] $profiles,
-    [Parameter(HelpMessage = "Whether to compile in prod mode. If missing, defaults to dev mode.")] [switch] $prod,
     [Parameter(HelpMessage = "Whether to create a new folder for the build. If missing, defaults to generic build folder.")] [switch] $clean
 )
 
