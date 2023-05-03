@@ -2,7 +2,7 @@
 
 LMP is a utility that aims to streamline the process of packaging a map and its assets. It can easily be configured to meet varied needs.
 
-From any directory, you can run ``.\lmp.ps1 mymap fullbuild.json``
+From any directory, you can run ``path\to\lmp.ps1 mymap fullbuild.json``
 
 ``fullbuild.json`` is the path to your main configuration file. You can specify more if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
 
@@ -61,3 +61,5 @@ A complete configuration file looks like this:
             "Mandatory. List of WAD files the map uses."
         ]
     }
+
+Running compilation from a script is more efficient than running it from the map editor. Besides, LMP supports build time optimization using Resguy (ignore assets shipped wit the game), as well as the CSG ``-onlyents`` parameter. It also let WadMaker not do a full rebuild if the Wad wasn’t changed.
