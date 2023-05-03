@@ -51,13 +51,8 @@ try {
     }
 
     foreach ($wad in $config.wads) {
-        $resguyIgnore = ($config.resguyIgnore -ne $null) ? (Get-Content $config.resguyIgnore) : $null
-        if ($resguyIgnore -ne $null -and $resguyIgnore.Contains($wad)) {
-            Write-Output "LMP: Ignoring $wad."
-        } else {
-            Write-Output "LMP: Copying $wad into $runFldName."
-            Copy-Item "$($config.assetFld)/$wad" -Destination . -Force
-        }
+        Write-Output "LMP: Copying $wad into $runFldName."
+        Copy-Item "$($config.assetFld)/$wad" -Destination . -Force
     }
 
     if ($config.sprMaker -ne $null) {
@@ -78,7 +73,13 @@ try {
         if ($config.mapExporter -ceq "mess") {
             Write-Output "LMP: Using MESS to export $mapname.rmf to $mapname.map."
             Copy-Item "$($config.mapRmfFld)/$mapname.rmf" -Destination . -Force
-            Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) -log verbose $mapname.rmf $mapname.map"
+
+            if ($config.messTemplatesFld -ne $null) {
+                Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) -log verbose $mapname.rmf $mapname.map"
+            } else {
+                Invoke-Expression "$($config.mess) -log verbose $mapname.rmf $mapname.map"
+            }
+
             (Get-Content "$mapname.map") | Foreach-Object {
                 $_
                 if ($_ -like '"classname" "worldspawn"') {
@@ -92,9 +93,13 @@ try {
             throw "Invalid mapExporter value."
         }
 
-        if ($config.mess -ne $null) {
+        if ($config.mess -ne $null -and -not $config.mapExporter -ceq "mess") {
             Write-Output "LMP: Running MESS on $mapname.map."
-            Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) $($config.messParams) $mapname"
+            if ($config.messTemplatesFld -ne $null) {
+                Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) $($config.messParams) $mapname"
+            } else {
+                Invoke-Expression "$($config.mess) $($config.messParams) $mapname"
+            }
         }
 
         if ($config.prod -eq $true) {
