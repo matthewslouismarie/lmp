@@ -4,7 +4,9 @@ LMP is a utility that aims to streamline the process of packaging a map and its 
 
 From any directory, you can run ``.\lmp.ps1 mymap fullbuild.json``
 
-``fullbuild.json`` is the path to your main configuratior file. You can specify more if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
+``fullbuild.json`` is the path to your main configuration file. You can specify more if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
+
+> :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
 ## Features:
 
