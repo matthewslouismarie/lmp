@@ -45,13 +45,13 @@ try {
         Copy-Item "$($config.compileRadFileFld)/$mapname.rad" -Destination . -Force
     }
 
-    if ($config._wadMaker -ne $null) {
-        Write-Output "LMP: Updating $($config._wadMakerWadName)."
-        Invoke-Expression "$($config._wadMaker) -subdirs -nologfile $($config._wadMakerTexturesFld) $($config.assetFld)/$($config._wadMakerWadName)"
+    if ($config.wadMaker -ne $null) {
+        Write-Output "LMP: Updating $($config.wadMakerWadName)."
+        Invoke-Expression "$($config.wadMaker) -subdirs -nologfile $($config.wadMakerTexturesFld) $($config.assetFld)/$($config.wadMakerWadName)"
     }
 
     foreach ($wad in $config.wads) {
-        $resguyIgnore = ($config._resguyIgnore -ne $null) ? (Get-Content $config._resguyIgnore) : $null
+        $resguyIgnore = ($config.resguyIgnore -ne $null) ? (Get-Content $config.resguyIgnore) : $null
         if ($resguyIgnore -ne $null -and $resguyIgnore.Contains($wad)) {
             Write-Output "LMP: Ignoring $wad."
         } else {
@@ -60,9 +60,9 @@ try {
         }
     }
 
-    if ($config._sprMaker -ne $null) {
+    if ($config.sprMaker -ne $null) {
         Write-Output "LMP: Generating sprites with SpriteMaker."
-        Invoke-Expression "$($config._sprMaker) -subdirs -nologfile $($config._sprMakerFldToBuild) $($config.assetFld)/sprites"
+        Invoke-Expression "$($config.sprMaker) -subdirs -nologfile $($config.sprMakerFldToBuild) $($config.assetFld)/sprites"
     }
 
     # if ($config._studiomdl -ne $null -and $config.mdlToBuild -ne $null) {
@@ -78,7 +78,7 @@ try {
         if ($config.mapExporter -ceq "mess") {
             Write-Output "LMP: Using MESS to export $mapname.rmf to $mapname.map."
             Copy-Item "$($config.mapRmfFld)/$mapname.rmf" -Destination . -Force
-            Invoke-Expression "$($config._mess) -dir $($config._messTemplatesFld) -log verbose $mapname.rmf $mapname.map"
+            Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) -log verbose $mapname.rmf $mapname.map"
             (Get-Content "$mapname.map") | Foreach-Object {
                 $_
                 if ($_ -like '"classname" "worldspawn"') {
@@ -92,9 +92,9 @@ try {
             throw "Invalid mapExporter value."
         }
 
-        if ($config._mess -ne $null) {
+        if ($config.mess -ne $null) {
             Write-Output "LMP: Running MESS on $mapname.map."
-            Invoke-Expression "$($config._mess) -dir $($config._messTemplatesFld) $($config._messParams) $mapname"
+            Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) $($config.messParams) $mapname"
         }
 
         if ($config.prod -eq $true) {
@@ -125,11 +125,11 @@ try {
     Copy-Item "../$mapname.bsp" -Destination "maps" -Force
     Write-Output "LMP: BSP copied to the build folder."
 
-    if ($config._resguy -ne $null) {
+    if ($config.resguy -ne $null) {
         Write-Output "LMP: Copying assets used by the map into the build folder"
 
-        Copy-Item $config._resguyIgnore -Destination . -Force
-        Invoke-Expression "$($config._resguy) $mapname -extra -missing" > $null
+        Copy-Item $config.resguyIgnore -Destination . -Force
+        Invoke-Expression "$($config.resguy) $mapname -extra -missing" > $null
 
         if (Test-Path -Path "maps/$mapname.res") {
             foreach ($l in Get-Content -Path "maps/$mapname.res") {
@@ -147,16 +147,16 @@ try {
         }
 
         # Re-generate the RES file without admin files and let Resguy detect missing files.
-        Invoke-Expression "$($config._resguy) $mapname -missing" > "..\resguy.log"
+        Invoke-Expression "$($config.resguy) $mapname -missing" > "..\resguy.log"
         Get-Content "..\resguy.log"
 
-        Remove-Item ([regex]::match($config._resguyIgnore, '\w+\.txt$').Groups[0].Value)
+        Remove-Item ([regex]::match($config.resguyIgnore, '\w+\.txt$').Groups[0].Value)
         Write-Output "LMP: Done with copying assets into the build folder. Check the resguy.log file for more information."
     }
 
-    if ($config._buildCopyFld -ne $null) {
+    if ($config.buildCopyFld -ne $null) {
         Write-Output "LMP: Copying the map and its assets to the game folder."
-        Copy-Item -Path "*" -Destination $config._buildCopyFld -Force -Recurse
+        Copy-Item -Path "*" -Destination $config.buildCopyFld -Force -Recurse
     }
 } finally {
     Set-Location $userPwd
