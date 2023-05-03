@@ -20,7 +20,13 @@ The following features can all be used at the same time, or activated separately
  - Automatically update the Wads using WadMaker before compilation.
  - Automatically update the sprites using SpriteMaker before compilation.
 
-## Configuration file
+## -clean
+
+By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap {myconfig.json} -clean``.
+
+> This makes sure no files from any previous run is kept, leading to a lower file size. It is recommended for final releases.
+
+## Configuration files
 
 Configuration files are JSON files. The order in which you specify the configuration files to LMP matters, the latter individual values will override the former’s.
 
@@ -30,8 +36,8 @@ Look up the ``fullbuild.json`` and ``nocompile.json`` for examples.
 
 A complete configuration file looks like this:
 
- - ``mess``: Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable.
- - ``messParams``: Only if ``mess`` is specified. Parameters for MESS if ``mess``.
+ - ``mess``: Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable if you want to use MESS to generate the .map file or use its templating engine.
+ - ``messParams``: Only if ``mess`` is specified. Parameters for MESS.
  - ``messTemplatesFld``: Only if ``mess`` is specified. Path to the MESS templates.
  - ``buildCopyFld``: Optional. Specify the game folder (e.g. the path to svencoop_addon) if you want LMP to copy the map and its assets into your game folder.
  - ``resguy``: Optional. Path to [Resguy executable (download link)](https://github.com/wootguy/resguy/releases) to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.
@@ -52,10 +58,10 @@ A complete configuration file looks like this:
  - ``compileRadParams``: Only if ``compile`` is set to ``true``.
  - ``compileVis``: Only if ``compile`` is set to ``true``. Path to the VIS executable.
  - ``compileVisParams``: Only if ``compile`` is set to ``true``.
- - ``map``: **Mandatory.** Whether to export the .rmf file to the .map format.
+ - ``map``: **Mandatory.** Whether to export the .rmf file to the .map format (``true`` or ``false``).
  - ``mapExporter``: Only if ``map`` is set to ``true``. Can either be ``"mess"`` or be ``null``. If ``null``, it will use the existing .map file. (Make sure it exists!)
  - ``mapRmfFld``: Only if ``map`` is set to ``true``. The folder in which the .rmf file is.
- - ``prod``: **Mandatory.** Whether to compile in prod mode. If set to true, it will disable any entity named ``"mm_devmapstart``.
+ - ``prod``: **Mandatory.** Whether to compile in prod mode. If set to true, it will disable any entity named ``"mm_devmapstart"``.
  - ``wads``: **Mandatory.** List of the filenames of all the Wads the map uses.
 
 ## Performance
@@ -66,3 +72,4 @@ Running compilation from a script is more efficient than running it from the map
 
  - Add option to automatically compile models before compilation.
  - Add GUI.
+
