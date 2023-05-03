@@ -31,15 +31,15 @@ Look up the ``fullbuild.json`` and ``nocompile.json`` for examples.
 A complete configuration file looks like this:
 
     {
-        "mess": "Optional. The path to the MESS executable.",
+        "mess": "Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable.",
         "messParams": "Optional, if mess is specified.",
         "messTemplatesFld": "Path to the MESS templates. Optional, if mess is specified.",
         "buildCopyFld": "Optional, if you want LMP to copy the map and its assets into your game folder.",
-        "resguy": "Optional. Path to Resguy to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.",
+        "resguy": "Optional. Path to [Resguy](https://github.com/wootguy/resguy/releases) to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.",
         "resguyIgnore": "Optional, but mandatory if resguy is specified. List of all the default content already shipped with the game, and excluded from the res file.",
-        "sprMaker": "Optional, if you want to generate sprites from images before compilation.",
+        "sprMaker": "Optional, path to the [SpriteMaker](https://github.com/pwitvoet/wadmaker) executable. If you want to generate sprites from images before compilation.",
         "sprMakerFldToBuild": "Mandatory if sprMaker is specified. The path to the folder containing the images from which SpriteMaker will generate the sprites.",
-        "wadMaker": "Optional. Path to WadMaker. Generate a Wad file from images before compilation.",
+        "wadMaker": "Optional. Path to [WadMaker](https://github.com/pwitvoet/wadmaker). Generate a Wad file from images before compilation.",
         "wadMakerTexturesFld": "Mandatory if wadMaker is specified. The path to the folder containing the images from which WadMaker will generate the Wad file.",
         "wadMakerWadName": "Mandatory if wadMaker is specified. Name of the Wad to build.",
         "assetFld": "Mandatory. Path to the folder containing all the assets. Assets in this folder must be organized in the traditional way: \"sprites\", \"models\", \"sound\", \"scripts\" as well as WAD in the main folder",
