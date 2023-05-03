@@ -30,33 +30,33 @@ Look up the ``fullbuild.json`` and ``nocompile.json`` for examples.
 
 A complete configuration file looks like this:
 
-``mess``: Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable.
-``messParams``: Only if ``mess`` is specified. Parameters for MESS if ``mess``.
-``messTemplatesFld``: Only if ``mess`` is specified. Path to the MESS templates.
-``buildCopyFld``: Optional. Specify the game folder (e.g. the path to svencoop_addon) if you want LMP to copy the map and its assets into your game folder.
-``resguy``: Optional. Path to [Resguy executable (download link)](https://github.com/wootguy/resguy/releases) to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.
-``resguyIgnore``: Only if ``resguy`` is specified. List of all the default content already shipped with the game, and excluded from the res file. Resguy can generate this file for you, see ``resguy.exe -h``.
-``sprMaker``: Optional. Path to the [SpriteMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). If you want to generate sprites from images before compilation.
-``sprMakerFldToBuild``: Only if ``sprMaker`` is specified. The path to the folder containing the images from which SpriteMaker will generate the sprites.
-``wadMaker``: Optional. Path to the [WadMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). Generate a Wad file from images before compilation.
-``wadMakerTexturesFld``: Only if ``wadMaker`` is specified. The path to the folder containing the images from which WadMaker will generate the Wad file.
-``wadMakerWadName``: Only if ``wadMaker`` is specified. Name of the Wad to build.
-``assetFld``: **Mandatory.** Path to the folder containing all the assets. Assets in this folder must be organized in the traditional way: "sprites", "models", "sound", "scripts" as well as Wads in the root folder.
-``compile``: **Mandatory.** Whether to compile the map (``true`` or ``false``).
-``compileBsp``: Only if ``compile`` is set to ``true``. Path to the BSP executable.
-``compileBspParams``: Only if ``compile`` is set to ``true``.
-``compileCsg``: Only if ``compile`` is set to ``true``. Path to the CSG executable.
-``compileCsgParams``: Only if ``compile`` is set to ``true``.
-``compileRad``: Only if ``compile`` is set to ``true``. Path to the RAD executable.
-``compileRadFileFld``: Only if ``compile`` is set to ``true``. Path to the .rad file.
-``compileRadParams``: Only if ``compile`` is set to ``true``.
-``compileVis``: Only if ``compile`` is set to ``true``. Path to the VIS executable.
-``compileVisParams``: Only if ``compile`` is set to ``true``.
-``map``: **Mandatory.** Whether to export the .rmf file to the .map format.
-``mapExporter``: Only if ``map`` is set to ``true``. Can either be ``"mess"`` or be ``null``. If ``null``, it will use the existing .map file. (Make sure it exists!)
-``mapRmfFld``: Only if ``map`` is set to ``true``. The folder in which the .rmf file is.
-``prod``: **Mandatory.** Whether to compile in prod mode. If set to true, it will disable any entity named ``"mm_devmapstart``.
-``wads``: **Mandatory.** List of the filenames of all the Wads the map uses.
+ - ``mess``: Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable.
+ - ``messParams``: Only if ``mess`` is specified. Parameters for MESS if ``mess``.
+ - ``messTemplatesFld``: Only if ``mess`` is specified. Path to the MESS templates.
+ - ``buildCopyFld``: Optional. Specify the game folder (e.g. the path to svencoop_addon) if you want LMP to copy the map and its assets into your game folder.
+ - ``resguy``: Optional. Path to [Resguy executable (download link)](https://github.com/wootguy/resguy/releases) to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.
+ - ``resguyIgnore``: Only if ``resguy`` is specified. List of all the default content already shipped with the game, and excluded from the res file. Resguy can generate this file for you, see ``resguy.exe -h``.
+ - ``sprMaker``: Optional. Path to the [SpriteMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). If you want to generate sprites from images before compilation.
+ - ``sprMakerFldToBuild``: Only if ``sprMaker`` is specified. The path to the folder containing the images from which SpriteMaker will generate the sprites.
+ - ``wadMaker``: Optional. Path to the [WadMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). Generate a Wad file from images before compilation.
+ - ``wadMakerTexturesFld``: Only if ``wadMaker`` is specified. The path to the folder containing the images from which WadMaker will generate the Wad file.
+ - ``wadMakerWadName``: Only if ``wadMaker`` is specified. Name of the Wad to build.
+ - ``assetFld``: **Mandatory.** Path to the folder containing all the assets. Assets in this folder must be organized in the traditional way: "sprites", "models", "sound", "scripts" as well as Wads in the root folder.
+ - ``compile``: **Mandatory.** Whether to compile the map (``true`` or ``false``).
+ - ``compileBsp``: Only if ``compile`` is set to ``true``. Path to the BSP executable.
+ - ``compileBspParams``: Only if ``compile`` is set to ``true``.
+ - ``compileCsg``: Only if ``compile`` is set to ``true``. Path to the CSG executable.
+ - ``compileCsgParams``: Only if ``compile`` is set to ``true``.
+ - ``compileRad``: Only if ``compile`` is set to ``true``. Path to the RAD executable.
+ - ``compileRadFileFld``: Only if ``compile`` is set to ``true``. Path to the .rad file.
+ - ``compileRadParams``: Only if ``compile`` is set to ``true``.
+ - ``compileVis``: Only if ``compile`` is set to ``true``. Path to the VIS executable.
+ - ``compileVisParams``: Only if ``compile`` is set to ``true``.
+ - ``map``: **Mandatory.** Whether to export the .rmf file to the .map format.
+ - ``mapExporter``: Only if ``map`` is set to ``true``. Can either be ``"mess"`` or be ``null``. If ``null``, it will use the existing .map file. (Make sure it exists!)
+ - ``mapRmfFld``: Only if ``map`` is set to ``true``. The folder in which the .rmf file is.
+ - ``prod``: **Mandatory.** Whether to compile in prod mode. If set to true, it will disable any entity named ``"mm_devmapstart``.
+ - ``wads``: **Mandatory.** List of the filenames of all the Wads the map uses.
 
 ## Performance
 
