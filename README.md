@@ -26,13 +26,15 @@ By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new 
 
 > This makes sure no files from any previous run is kept, leading to a lower file size. It is recommended for final releases.
 
-## Configuration files
+## Configuration file reference
 
 Configuration files are JSON files. The order in which you specify the configuration files to LMP matters, the latter individual values will override the former’s.
 
 When a parameter is optional, you can specify ``null`` as the value (without apostrophes).
 
 Look up the ``fullbuild.json`` and ``nocompile.json`` for examples.
+
+Most parameters are optional.
 
 A complete configuration file looks like this:
 
