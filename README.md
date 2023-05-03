@@ -2,9 +2,13 @@
 
 LMP is a utility that aims to streamline the process of packaging a map and its assets. It can easily be configured to meet varied needs.
 
-From any directory, you can run ``path\to\lmp.ps1 mymap {myconfig.json}``
+From any directory, you can run ``path\to\lmp.ps1 mymap {myconfig.json}``. Replace ``{myconfig.json}`` by the path to your main configuration file.
 
-Replace ``{myconfig.json}`` by the path to your main configuration file. You can specify more if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
+This will compile your map and generate a build folder containing all the custom assets it uses, excluding of course the default ones already shipped with the game.
+
+You can configure it to update your Wad before compilation, to update your sprites as well as to use MESS. You can also configure it to copy the map and its assets to your game folder.
+
+You can specify more configuration files if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
 
 > :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
