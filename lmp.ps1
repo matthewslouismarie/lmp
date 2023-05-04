@@ -15,8 +15,7 @@
 
 param(
     [Parameter(Mandatory = $true, HelpMessage = "The path to the map (e.g. mymap.rmf, mymap.map or mymap.bsp). Behaviour changes based on the extension!")] $inputMapPath,
-    [Parameter(Mandatory = $true, HelpMessage = "The path to the main JSON configuration file (e.g. hl.json).")] $mainprofile,
-    [Parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles (e.g. nores.json, fastcompile.json, etc.).")] $profiles,
+    [Parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional configuration files (e.g. nores.json, fastcompile.json, etc.).")] $additionalJsonConfigs,
     [Parameter(HelpMessage = "Whether to create a new folder for the build. If missing, defaults to generic build folder.")] [switch] $clean
 )
 
@@ -37,11 +36,29 @@ if (Test-Path -LiteralPath $inputMapPath) {
     throw "LMP: $inputMapPath not found."
 }
 
-$config = Get-Content -Raw $mainprofile | ConvertFrom-Json -AsHashTable
-foreach ($p in $profiles) {
-    $subconfig = Get-Content -Raw $p | ConvertFrom-Json -AsHashTable
-    foreach ($c in $subconfig.GetEnumerator()) {
-        $config[$c.Name] = $c.Value
+if (!(Test-Path -LiteralPath "$PSScriptRoot/default.lmp.json")) {
+    throw "LMP: $PSScriptRoot/default.lmp.json not found. You must copy default.lmp.json.example into default.lmp.json and modify the example values."
+}
+
+$config = Get-Content -Raw "$PSScriptRoot/default.lmp.json" | ConvertFrom-Json -AsHashTable
+
+if (Test-Path -LiteralPath "$inputMapFld/$mapName.lmp.json") {
+    $additionalJsonConfigs += "$inputMapFld/$mapName.lmp.json"
+}
+
+foreach ($jsonConfig in $additionalJsonConfigs) {
+    $additionalConfig = Get-Content -Raw $jsonConfig | ConvertFrom-Json -AsHashTable
+    foreach ($setting in $additionalConfig.GetEnumerator()) {
+        if ($setting.Value -eq $null) {
+            $config[$setting.Name] = $setting.Value
+        } elseif ($setting.Value.GetType().Name -ceq "OrderedHashtable") {
+            foreach ($subSetting in $setting.Value.GetEnumerator()) {
+                $config[$setting.Name][$subSetting.Name] = $subSetting.Value
+            }
+        } else {
+            $setting.Value.GetType().Name
+            $config[$setting.Name] = $setting.Value
+        }
     }
 }
 
@@ -74,27 +91,27 @@ try {
     }
 
     # If SpriteMaker is enabled
-    if ($config.sprMaker -ne $null) {
+    if ($config.spriteMaker -ne $null -and $config.spriteMaker.isEnabled) {
         Write-Output "LMP: Generating sprites with SpriteMaker."
-        Invoke-Expression "$($config.sprMaker) -subdirs -nologfile $($config.sprMakerFldToBuild) $($config.assetFld)/sprites"
+        Invoke-Expression "$($config.spriteMaker.executablePath) -subdirs -nologfile $($config.spriteMaker.imagesFolderPath) $($config.assetsFolderPath)/sprites"
         if (!$?) {
             Throw "LMP: SpriteMaker failed."
         }
     }
 
     # If WadMaker is enabled
-    if ($config.wadMaker -ne $null) {
-        Write-Output "LMP: Updating $($config.wadMakerWadName)."
-        Invoke-Expression "$($config.wadMaker) $($clean ? "-full" : " ") -subdirs -nologfile $($config.wadMakerTexturesFld) $($config.assetFld)/$($config.wadMakerWadName)"
+    if ($config.wadMaker -ne $null -and $config.wadMaker.isEnabled) {
+        Write-Output "LMP: Updating $($config.wadMaker.wadToBuildFilename)."
+        Invoke-Expression "$($config.wadMaker.executablePath) $($clean ? "-full" : " ") -subdirs -nologfile $($config.wadMaker.imagesFolderPath) $($config.assetsFolderPath)/$($config.wadMaker.wadToBuildFilename)"
         if (!$?) {
             Throw "LMP: WadMaker failed."
         }
     }
 
     # Copy Wads into run folder
-    foreach ($wad in $config.wads) {
+    foreach ($wad in $config.wadsUsedByMap.list) {
         Write-Output "LMP: Copying $wad into $runFldName."
-        Copy-Item "$($config.assetFld)/$wad" -Force
+        Copy-Item -LiteralPath "$($config.assetsFolderPath)/$wad" -Force
     }
 
     # if ($config._studiomdl -ne $null -and $config.mdlToBuild -ne $null) {
@@ -108,57 +125,57 @@ try {
 
     # If the input file is an .rmf file, export it to map.
     if ($inputFileExtension -ceq "rmf") {
-        if ($config.mapExporter -ceq "mess") {
-            Write-Output "LMP: Using MESS to export $mapName.rmf to $mapName.map."
+        Write-Output "LMP: Using MESS to export $mapName.rmf to $mapName.map."
 
-            # Copy input RMF file into the build folder
-            Copy-Item -LiteralPath "$inputMapFld/$mapName.rmf" -Force
-            if (!$?) {
-                throw 'LMP: Failed to copy RMF into the build folder.'
-            }
+        if ($config.mess -eq $null -or $config.mess.executablePath -eq $null) {
+            Throw "LMP: A MESS executable MUST be specified in the configuration file to export the RMF to .map."
+        }
 
-            # Run MESS on the input RMF file
-            if ($config.messTemplatesFld -ne $null) {
-                Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) -log verbose $mapName.rmf $mapName.map"
-            } else {
-                Invoke-Expression "$($config.mess) -log verbose $mapName.rmf $mapName.map"
-            }
-            if (!$?) {
-                throw 'LMP: MESS failed to export the map to a MAP file.'
-            }
+        # Copy input RMF file into the build folder
+        Copy-Item -LiteralPath "$inputMapFld/$mapName.rmf" -Force
+        if (!$?) {
+            throw 'LMP: Failed to copy RMF into the build folder.'
+        }
 
-            # Add list of used WADs in the exported MAP file
-            (Get-Content "$mapName.map") | Foreach-Object {
-                $_
-                if ($_ -like '"classname" "worldspawn"') {
-                    '"wad" "' + ($config.wads -join ";") + '"'
-                }
-            } | Set-Content "$mapName.map"
-            if (!$?) {
-                throw 'LMP: Failed to add the WADs to the MAP file.'
-            }
+        # Run MESS on the input RMF file
+        if ($config.mess.templatesFolderPath -ne $null) {
+            Invoke-Expression "$($config.mess.executablePath) -dir $($config.mess.templatesFolderPath) -log verbose $mapName.rmf $mapName.map"
         } else {
-            throw "LMP: Invalid mapExporter value."
+            Invoke-Expression "$($config.mess.executablePath) -log verbose $mapName.rmf $mapName.map"
+        }
+        if (!$?) {
+            throw 'LMP: MESS failed to export the map to a MAP file.'
         }
 
-        # Run MESS if MESS executable is specified and if it wasn’t run during rmf export to map
-        if ($config.mess -ne $null -and -not $config.mapExporter -ceq "mess") {
-            Write-Output "LMP: Running MESS on $mapName.map."
-            if ($config.messTemplatesFld -ne $null) {
-                Invoke-Expression "$($config.mess) -dir $($config.messTemplatesFld) $($config.messParams) $mapName"
-            } else {
-                Invoke-Expression "$($config.mess) $($config.messParams) $mapName"
+        # Add list of used WADs in the exported MAP file
+        (Get-Content "$mapName.map") | Foreach-Object {
+            $_
+            if ($_ -like '"classname" "worldspawn"') {
+                '"wad" "' + ($config.wadsUsedByMap.list -join ";") + '"'
             }
-            if (!$?) {
-                throw 'LMP: MESS did not execute correctly.'
-            }
+        } | Set-Content "$mapName.map"
+        if (!$?) {
+            throw 'LMP: Failed to add the WADs to the MAP file.'
         }
+    }
 
-        # Disable mm_devmapstart in production mode
-        if ($config.prod -eq $true) {
-            Write-Output "LMP: Renaming mm_devmapstart to mm_devmapstart_dis to disable it (prod mode)."
-            (Get-Content "$mapName.map") -Replace '"targetname" "mm_devmapstart"', '"targetname" "mm_devmapstart_dis"' | Set-Content "$mapName.map"
+    # Run MESS if MESS executable is specified and if it wasn’t run during rmf export to map
+    if ($config.mess -ne $null -and $config.mess.transformMapFiles -ne $null -and $inputFileExtension -cne "rmf") {
+        Write-Output "LMP: Running MESS on $mapName.map."
+        if ($config.mess.templatesFolderPath -ne $null) {
+            Invoke-Expression "$($config.mess.executablePath) -dir $($config.mess.templatesFolderPath) $($config.mess.params) $mapName"
+        } else {
+            Invoke-Expression "$($config.mess.executablePath) $($config.mess.params) $mapName"
         }
+        if (!$?) {
+            throw 'LMP: MESS did not execute correctly.'
+        }
+    }
+
+    # Disable mm_devmapstart when removeDevEntities is enabled
+    if ($config.removeDevEntities -eq $true) {
+        Write-Output "LMP: Renaming mm_devmapstart to mm_devmapstart_dis to disable it (not in dev mode)."
+        (Get-Content "$mapName.map") -Replace '"targetname" "mm_devmapstart"', '"targetname" "mm_devmapstart_dis"' | Set-Content "$mapName.map"
     }
 
     # Compile the map if input file isn’t a .bsp file.
@@ -173,11 +190,11 @@ try {
             }
         }
 
-        Invoke-Expression "$($config.compileCsg) $($config.compileCsgParams) $mapName"
-        if (!($config.compileCsgParams -Match "-onlyents")) {
-            Invoke-Expression "$($config.compileBsp) $($config.compileBspParams) $mapName"
-            Invoke-Expression "$($config.compileVis) $($config.compileVisParams) $mapName"
-            Invoke-Expression "$($config.compileRad) $($config.compileRadParams) $mapName"
+        Invoke-Expression "$($config.compilers.csgExecutablePath) $($config.compilers.csgParams) $mapName"
+        if (!($config.compilers.csgParams -Match "-onlyents")) {
+            Invoke-Expression "$($config.compilers.bspExecutablePath) $($config.compilers.bspParams) $mapName"
+            Invoke-Expression "$($config.compilers.visExecutablePath) $($config.compilers.visParams) $mapName"
+            Invoke-Expression "$($config.compilers.radExecutablePath) $($config.compilers.radParams) $mapName"
         } else {
             Write-Output "LMP: -onlyents: Only CSG was called."
         }
@@ -186,7 +203,7 @@ try {
         }
     } else {
         Write-Output "LMP: Map already compiled. Copying existing $mapName.bsp into $runFldName."
-        Copy-Item -LiteralPath "$($config.assetFld)/maps/$mapName.bsp" -Force
+        Copy-Item -LiteralPath "$($config.assetsFolderPath)/maps/$mapName.bsp" -Force
         if (!$?) {
             throw 'LMP: Could not copy existing BSP into the build folder.'
         }
@@ -203,17 +220,17 @@ try {
     # Copy BSP into the build folder
     Write-Output "LMP: Copying BSP into the build folder."
     New-Item -Name "maps" -Force -ItemType Directory
-    Copy-Item "../$mapName.bsp" -Destination "maps" -Force
+    Copy-Item -LiteralPath "../$mapName.bsp" -Destination "maps" -Force
     if (!$?) {
         throw 'LMP: Could not move BSP into the build folder.'
     }
 
     # If Resguy is set, generate RES file and copy assets into the build folder
-    if ($config.resguy -ne $null) {
+    if ($config.resguy -ne $null -and $config.resguy.isEnabled) {
         Write-Output "LMP: Copying assets used by the map into the build folder using Resguy."
 
-        Copy-Item $config.resguyIgnore -Force
-        Invoke-Expression "$($config.resguy) $mapName -extra -missing" > $null
+        Copy-Item -LiteralPath $config.resguy.ignoreFilePath -Force
+        Invoke-Expression "$($config.resguy.executablePath) $mapName -extra -missing" > $null
         if (!$?) {
             Throw 'LMP: Resguy failed generating a .RES file on the first run.'
         }
@@ -222,10 +239,10 @@ try {
             foreach ($l in Get-Content -Path "maps/$mapName.res") {
                 if (!($l -match '^\w+\.(bsp|res)$')) {
                     if ($l -match '^\w+\.wad$') {
-                        Copy-Item "../$l" -Force
+                        Copy-Item -LiteralPath "../$l" -Force
                     } elseif ($l -match '^\w+') {
                         New-Item -Path ([regex]::match($l, '^[\w/]+/').Groups[0].Value) -Force -ItemType Directory
-                        Copy-Item "$($config.assetFld)/$l" -Destination $l -Force
+                        Copy-Item -LiteralPath "$($config.assetsFolderPath)/$l" -Destination $l -Force
                     }
                     Throw "LMP: Failed to copy $l into the build folder."
                 }
@@ -235,20 +252,20 @@ try {
         }
 
         # Re-generate the RES file without admin files and let Resguy detect missing files.
-        Invoke-Expression "$($config.resguy) $mapName -missing" > "..\resguy.log"
+        Invoke-Expression "$($config.resguy.executablePath) $mapName -missing" > "..\resguy.log"
         if (!$?) {
             Throw 'LMP: Resguy failed generating a .RES file on the second run.'
         }
         Get-Content "..\resguy.log"
 
-        Remove-Item ([regex]::match($config.resguyIgnore, '\w+\.txt$').Groups[0].Value)
+        Remove-Item ([regex]::match($config.resguy.ignoreFilePath, '\w+\.txt$').Groups[0].Value)
         Write-Output "LMP: Done with copying assets into the build folder. Check the resguy.log file for more information."
     }
 
     # If the config specifies a file to which the build must be copied
-    if ($config.buildCopyFld -ne $null) {
+    if ($config.copyAfterBuild.destinationFolderPath -ne $null) {
         Write-Output "LMP: Copying the map and its assets to the game folder."
-        Copy-Item -Path "*" -Destination $config.buildCopyFld -Force -Recurse
+        Copy-Item -Path "*" -Destination $config.copyAfterBuild.destinationFolderPath -Force -Recurse
         if (!$?) {
             Throw "LMP: Could not copy all the files into the game folder."
         }

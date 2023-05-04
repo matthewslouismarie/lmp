@@ -1,0 +1,51 @@
+{
+    "assetsFolderPath": "C:/Users/user/Documents/crossedpaths",
+    "removeDevEntities": false,
+    "mess": {
+        "description": "MANDATORY if given file is of the RMF file format.",
+        "executablePath": "C:/Users/user/Documents/crossedpaths/mess_1_2/MESS.exe",
+        "params": "-log verbose",
+        "templatesFolderPath": null,
+        "transformMapFiles": false
+    },
+    "copyAfterBuild": {
+        "description": "Optional. Copy the build to the specified folder.",
+        "destinationFolderPath": null
+    },
+    "resguy": {
+        "description": "RECOMMENDED. If specified, generates a RES file and copy all the assets the map uses into the build folder. If not specified, assets used by the map won’t be copied into the build folder!",
+        "isEnabled": true,
+        "executablePath": "C:/Users/user/Documents/resguy_v9_windows_x64/resguy.exe",
+        "ignoreFilePath": "C:/Users/user/Documents/resguy_v9_windows_x64/resguy_default_content.txt"
+    },
+    "spriteMaker": {
+        "description": "Optional. If specified, generates or updates sprites before build.",
+        "isEnabled": false,
+        "executablePath": "C:/Users/user/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/SpriteMaker.exe",
+        "imagesFolderPath": null
+    },
+    "wadMaker": {
+        "description": "Optional. If specified, generates or updates the specified WAD file before build.",
+        "isEnabled": false,
+        "executablePath": "C:/Users/user/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/WadMaker.exe",
+        "imagesFolderPath": null,
+        "wadToBuildFilename": null
+    },
+    "compilers": {
+        "description": "MANDATORY if given file is of the RMF or MAP file format.",
+        "bspExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-BSP_x64.exe",
+        "bspParams": "",
+        "csgExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-CSG_x64.exe",
+        "csgParams": "",
+        "radExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-RAD_x64.exe",
+        "radParams": "",
+        "visExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-VIS_x64.exe",
+        "visParams": ""
+    },
+    "wadsUsedByMap": {
+        "description": "MANDATORY.",
+        "list": [
+            "halflife.wad"
+        ]
+    }
+}

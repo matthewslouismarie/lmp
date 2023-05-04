@@ -1,0 +1,6 @@
+{
+    "compilers": {
+        "radParams": "-fast",
+        "visParams": "-fast"
+    }
+}
