@@ -10,8 +10,6 @@ After the quick task of configuring LMP (see following section), you can run ``p
 
 ## Minimum settings
 
-> :warning: All paths must use forward slashes "/" (and not backslashes "\").
-
 You MUST configure it before using it. In order to do that, copy the ``default.lmp.json.example`` file and rename it to ``default.lmp.json``. Then modify it. You must provide at the very least the correct paths for the compilers.
 
     "compilers": {
@@ -22,6 +20,8 @@ You MUST configure it before using it. In order to do that, copy the ``default.l
         "visExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-VIS_x64.exe",
         // …
     },
+
+> All paths must use forward slashes "/" (and not backslashes "\").
 
 You also must set ``assetsFolderPath`` and the ``list`` in ``wadsUsedByMap``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any base assets in ``assetsFolderPath``, apart from the WAD files your map uses. (Even base WADs must be included in this directory.)
 
@@ -45,7 +45,7 @@ MESS allows LMP to export your RMF directly into a MAP file and Resguy allows LM
 
 By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap.rmf -clean``.
 
-> This makes sure no files from any previous run is kept, leading to a lower file size. It is recommended for final releases.
+> This makes sure no files from any previous run is kept, leading to a lower build folder size. It is recommended for final releases.
 
 ## Additional settings
 
@@ -67,7 +67,7 @@ You can also create any number of arbitrary JSON configuration files and pass th
 
 ### Updating assets before build
 
-You can configure LMP to update your Wad before build as well as to update your sprites. See [https://github.com/pwitvoet/wadmaker](WadMaker and SpriteMaker) for their respective documentation.
+You can configure LMP to update your Wad before build as well as to update your sprites. See [WadMaker and SpriteMaker](https://github.com/pwitvoet/wadmaker) for their respective documentation.
 
     "spriteMaker": {
         // …
@@ -87,13 +87,14 @@ You can configure LMP to update your Wad before build as well as to update your 
 
 If you want to be able to play directly at your map after the build was finished, specify your game or mod folder in ``copyAfterBuild``.
 
-    "copyAfterBuild": {1
+    "copyAfterBuild": {
+        // …
         "destinationFolderPath": "C:/Program Files (x86)/Steam/steamapps/common/Sven Co-op/svencoop_addon"
     },
 
 ### Removing dev entities
 
-If you want to automatically disable any multi_manager "mm_devmapstart" that you would use only for dev builds, set this ``removeDevEntities`` to true.
+If you want to automatically disable any multi_manager named "mm_devmapstart" that you would use only for dev builds, set ``removeDevEntities`` to true.
 
 ### MESS templating engine
 
@@ -101,7 +102,7 @@ If you also want to use the MESS templating engine, specify the other MESS set
 
     "mess": {
         // …
-        "templatesFolderPath": "C:/Users/l/Documents/rmf/templates",
+        "templatesFolderPath": "C:/Users/l/Documents/rmf/templates", // if you use MESS external templates
         "transformMapFiles": true
     },
 
