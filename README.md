@@ -2,17 +2,110 @@
 
 LMP is a utility that aims to streamline the process of packaging a map and its assets. It can easily be configured to meet varied needs.
 
-From any directory, you can run ``path\to\lmp.ps1 mymap {myconfig.json}``. Replace ``{myconfig.json}`` by the path to your main configuration file.
+## Running LMP
 
-This will compile your map and generate a build folder containing all the custom assets it uses, excluding of course the default ones already shipped with the game.
-
-You can configure it to update your Wad before compilation, to update your sprites as well as to use MESS. You can also configure it to copy the map and its assets to your game folder.
-
-You can specify more configuration files if you want to, for instance you could have: ``.\lmp.ps1 mymap fullbuild.json onlyents.json``, with the ``onlyents.json`` file overriding just one parameter (namely ``compileCsgParams``).
+After the quick task of configuring LMP (see following section), you can run ``path\to\lmp.ps1 mymap.rmf``. This will compile your map and put it, along all the custom assets it uses (excluding base ones already shipped with the game it is meant for), into a separate build folder.
 
 > :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
-## Features
+## Minimum settings
+
+> :warning: All paths must use forward slashes "/" (and not backslashes "\").
+
+You MUST configure it before using it. In order to do that, copy the ``default.lmp.json.example`` file and rename it to ``default.lmp.json``. Then modify it. You must provide at the very least the correct paths for the compilers.
+
+    "compilers": {
+        // …
+        "bspExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-BSP_x64.exe",
+        "csgExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-CSG_x64.exe",
+        "radExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-RAD_x64.exe",
+        "visExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-VIS_x64.exe",
+        // …
+    },
+
+You also must set ``assetsFolderPath`` and the ``list`` in ``wadsUsedByMap``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any base assets in ``assetsFolderPath``, apart from the WAD files your map uses. (Even base WADs must be included in this directory.)
+
+It is also heavily recommended to provide a path for [MESS](https://github.com/pwitvoet/mess/releases/tag/1.1) and [Resguy](https://github.com/wootguy/resguy/releases). Download those if you don’t have them, then specify their paths in ``default.lmp.json``.
+
+    "mess": {
+        // …
+        "executablePath": "C:/Users/l/Documents/crossedpaths/mess_1_2/MESS.exe",
+        // …
+    },
+    // …
+    "resguy": {
+        // …
+        "executablePath": "C:/Users/l/Documents/resguy_v9_windows_x64/resguy.exe",
+        "ignoreFilePath": "C:/Users/l/Documents/resguy_v9_windows_x64/resguy_default_content.txt"
+    },
+
+MESS allows LMP to export your RMF directly into a MAP file and Resguy allows LMP to copy all the custom assets the map uses into a new build folder.
+
+## -clean
+
+By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap.rmf -clean``.
+
+> This makes sure no files from any previous run is kept, leading to a lower file size. It is recommended for final releases.
+
+## Additional settings
+
+If you have any question, just look up the ``default.example.lmp.json`` file for a complete reference of the available options, and ``onlyents.example.lmp.json`` for an example of how you can override just certain settings.
+
+### Creating a configuration file specific to your map
+
+If you do not want to modify the global ``default.lmp.json``, you can create a secondary JSON file containing only the settings you want to override. You then only need to put it into the same folder as your map with the name ``yourmap.lmp.json``.
+
+### Creating a configuration file for certain profiles (fast compile, release build, etc.)
+
+You can also create any number of arbitrary JSON configuration files and pass them to LMP explicitely, by specifying their paths after the path to your map: ``path\to\lmp.ps1 mymap.rmf onlyents.json``.
+
+    {
+        "compilers": {
+            "csgParams": "-onlyents"
+        }
+    }
+
+### Updating assets before build
+
+You can configure LMP to update your Wad before build as well as to update your sprites. See [https://github.com/pwitvoet/wadmaker](WadMaker and SpriteMaker) for their respective documentation.
+
+    "spriteMaker": {
+        // …
+        "isEnabled": true,
+        "executablePath": "C:/Users/l/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/SpriteMaker.exe",
+        "imagesFolderPath": "C:/Users/l/Documents/images/sprites"
+    },
+    "wadMaker": {
+        // …
+        "isEnabled": true,
+        "executablePath": "C:/Users/l/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/WadMaker.exe",
+        "imagesFolderPath": "C:/Users/l/Documents/images/textures",
+        "wadToBuildFilename": "mywad.wad"
+    },
+
+### Copying build to the game folder
+
+If you want to be able to play directly at your map after the build was finished, specify your game or mod folder in ``copyAfterBuild``.
+
+    "copyAfterBuild": {1
+        "destinationFolderPath": "C:/Program Files (x86)/Steam/steamapps/common/Sven Co-op/svencoop_addon"
+    },
+
+### Removing dev entities
+
+If you want to automatically disable any multi_manager "mm_devmapstart" that you would use only for dev builds, set this ``removeDevEntities`` to true.
+
+### MESS templating engine
+
+If you also want to use the MESS templating engine, specify the other MESS settings.
+
+    "mess": {
+        // …
+        "templatesFolderPath": "C:/Users/l/Documents/rmf/templates",
+        "transformMapFiles": true
+    },
+
+## List of features
 
 The following features can all be used at the same time, or activated separately. It depends on the configuration files passed to LMP.
 
@@ -23,52 +116,6 @@ The following features can all be used at the same time, or activated separately
  - Run MESS, allowing the use of MESS templates inside the map.
  - Automatically update the Wads using WadMaker before compilation.
  - Automatically update the sprites using SpriteMaker before compilation.
-
-## -clean
-
-By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap {myconfig.json} -clean``.
-
-> This makes sure no files from any previous run is kept, leading to a lower file size. It is recommended for final releases.
-
-## Configuration file reference
-
-Configuration files are JSON files. The order in which you specify the configuration files to LMP matters, the latter individual values will override the former’s.
-
-When a parameter is optional, you can specify ``null`` as the value (without apostrophes).
-
-Look up the ``fullbuild.json`` and ``nocompile.json`` for examples.
-
-Most parameters are optional.
-
-A complete configuration file looks like this:
-
- - ``mess``: Optional. The path to the [MESS](https://github.com/pwitvoet/mess) executable if you want to use MESS to generate the .map file or use its templating engine.
- - ``messParams``: Only if ``mess`` is specified. Parameters for MESS.
- - ``messTemplatesFld``: Only if ``mess`` is specified. Path to the MESS templates.
- - ``buildCopyFld``: Optional. Specify the game folder (e.g. the path to svencoop_addon) if you want LMP to copy the map and its assets into your game folder.
- - ``resguy``: Optional. Path to [Resguy executable (download link)](https://github.com/wootguy/resguy/releases) to generate RES file. Necessary if you want LMP to copy all the assets used by the map into the build folder.
- - ``resguyIgnore``: Only if ``resguy`` is specified. List of all the default content already shipped with the game, and excluded from the res file. Resguy can generate this file for you, see ``resguy.exe -h``.
- - ``sprMaker``: Optional. Path to the [SpriteMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). If you want to generate sprites from images before compilation.
- - ``sprMakerFldToBuild``: Only if ``sprMaker`` is specified. The path to the folder containing the images from which SpriteMaker will generate the sprites.
- - ``wadMaker``: Optional. Path to the [WadMaker executable (download link)](https://github.com/pwitvoet/wadmaker/releases). Generate a Wad file from images before compilation.
- - ``wadMakerTexturesFld``: Only if ``wadMaker`` is specified. The path to the folder containing the images from which WadMaker will generate the Wad file.
- - ``wadMakerWadName``: Only if ``wadMaker`` is specified. Name of the Wad to build.
- - ``assetFld``: **Mandatory.** Path to the folder containing all the assets. Assets in this folder must be organized in the traditional way: "sprites", "models", "sound", "scripts" as well as Wads in the root folder.
- - ``compile``: **Mandatory.** Whether to compile the map (``true`` or ``false``).
- - ``compileBsp``: Only if ``compile`` is set to ``true``. Path to the BSP executable.
- - ``compileBspParams``: Only if ``compile`` is set to ``true``.
- - ``compileCsg``: Only if ``compile`` is set to ``true``. Path to the CSG executable.
- - ``compileCsgParams``: Only if ``compile`` is set to ``true``.
- - ``compileRad``: Only if ``compile`` is set to ``true``. Path to the RAD executable.
- - ``compileRadFileFld``: Only if ``compile`` is set to ``true``. Path to the .rad file.
- - ``compileRadParams``: Only if ``compile`` is set to ``true``.
- - ``compileVis``: Only if ``compile`` is set to ``true``. Path to the VIS executable.
- - ``compileVisParams``: Only if ``compile`` is set to ``true``.
- - ``map``: **Mandatory.** Whether to export the .rmf file to the .map format (``true`` or ``false``).
- - ``mapExporter``: Only if ``map`` is set to ``true``. Can either be ``"mess"`` or be ``null``. If ``null``, it will use the existing .map file. (Make sure it exists!)
- - ``mapRmfFld``: Only if ``map`` is set to ``true``. The folder in which the .rmf file is.
- - ``prod``: **Mandatory.** Whether to compile in prod mode. If set to true, it will disable any entity named ``"mm_devmapstart"``.
- - ``wads``: **Mandatory.** List of the filenames of all the Wads the map uses.
 
 ## Performance
 
