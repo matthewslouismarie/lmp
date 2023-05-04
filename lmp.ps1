@@ -16,7 +16,7 @@
 param(
     [Parameter(Mandatory = $true, HelpMessage = "The map filename, excluding any extension (e.g. mymap).")] $mapname,
     [Parameter(Mandatory = $true, HelpMessage = "The path to the main JSON configuration file (e.g. hl.json).")] $mainprofile,
-    [parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles (e.g. nores.json, fastcompile.json, etc.).")] $profiles,
+    [Parameter(ValueFromRemainingArguments = $true, HelpMessage="Paths to additional profiles (e.g. nores.json, fastcompile.json, etc.).")] $profiles,
     [Parameter(HelpMessage = "Whether to create a new folder for the build. If missing, defaults to generic build folder.")] [switch] $clean
 )
 
@@ -30,14 +30,28 @@ foreach ($p in $profiles) {
     }
 }
 
-$runFldName = $clean ? "lmp_$(Get-Date -Format FileDateTimeUniversal)_$mapname" : "lmp_$mapname"
+$runFldName = "lmp_$mapname"
 $userPwd = Get-Location
 
 try {
     # Create a folder assigned with this run
+    if ($clean -and (Test-Path -LiteralPath $runFldName -PathType Container)) {
+        Write-Output "LMP: Removing existing $runFldName folder."
+        Remove-Item -Force -Path $runFldName -Recurse
+        if (!$?) {
+            Throw "LMP: Could not delete existing $runFldName."
+        }
+    }
+    if (!(Test-Path -LiteralPath $runFldName -PathType Container)) {
+        Write-Output "LMP: Creating new $runFldName folder."
+        New-Item -Name $runFldName -Force -ItemType Directory
+    }
+
     Write-Output "LMP: Moving into $runFldName."
-    New-Item -Name $runFldName -Force -ItemType Directory
     Set-Location $runFldName
+    if (!$?) {
+        Throw "LMP: Could not move into $runFldName."
+    }
 
     if ($config.compile -and (Test-Path -Path "$($config.compileRadFileFld)/$mapname.rad")) {
         Write-Output "LMP: Copying $mapname.rad into $runFldName."
