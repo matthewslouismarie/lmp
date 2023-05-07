@@ -10,6 +10,7 @@
 # GUI
 # DONE Remove dev entities
 # @todo Validate config file, check that code should throw error if config file is invalid or field is not specified
+# @todo Verify JSON schema
 
 # Paths specified in the configuration file must not have trailing slashes.
 
@@ -48,15 +49,15 @@ if (Test-Path -LiteralPath "$inputMapFld/$mapName.lmp.json") {
 
 foreach ($jsonConfig in $additionalJsonConfigs) {
     $additionalConfig = Get-Content -Raw $jsonConfig | ConvertFrom-Json -AsHashTable
+    if (!$?) {
+        throw "LMP: Could not read $jsonConfig."
+    }
     foreach ($setting in $additionalConfig.GetEnumerator()) {
-        if ($setting.Value -eq $null) {
-            $config[$setting.Name] = $setting.Value
-        } elseif ($setting.Value.GetType().Name -ceq "OrderedHashtable") {
+        if ($setting.Value.GetType().Name -ceq "OrderedHashtable" -and ($config[$setting.Name] -ne $null)) {
             foreach ($subSetting in $setting.Value.GetEnumerator()) {
                 $config[$setting.Name][$subSetting.Name] = $subSetting.Value
             }
         } else {
-            $setting.Value.GetType().Name
             $config[$setting.Name] = $setting.Value
         }
     }
@@ -65,24 +66,24 @@ foreach ($jsonConfig in $additionalJsonConfigs) {
 $runFldName = "lmp_$mapName"
 $userPwd = Get-Location
 
-try {
-    # Remove existing folder, if it exists, in $clean mode
-    if ($clean) {
-        if (Test-Path -LiteralPath $runFldName -PathType Container) {
-            Write-Output "LMP: Removing existing $runFldName folder."
-            Remove-Item -Force -Path $runFldName -Recurse
-            if (!$?) {
-                Throw "LMP: Could not delete existing $runFldName."
-            }
+# Remove existing folder, if it exists, in $clean mode
+if ($clean) {
+    if (Test-Path -LiteralPath $runFldName -PathType Container) {
+        Write-Output "LMP: Removing existing $runFldName folder."
+        Remove-Item -Force -Path $runFldName -Recurse
+        if (!$?) {
+            Throw "LMP: Could not delete existing $runFldName."
         }
     }
+}
 
-    # Create folder for the run if it doesn’t exist
-    if (!(Test-Path -LiteralPath $runFldName -PathType Container)) {
-        Write-Output "LMP: Creating new $runFldName folder."
-        New-Item -Name $runFldName -Force -ItemType Directory
-    }
+# Create folder for the run if it doesn’t exist
+if (!(Test-Path -LiteralPath $runFldName -PathType Container)) {
+    Write-Output "LMP: Creating new $runFldName folder."
+    New-Item -Name $runFldName -Force -ItemType Directory
+}
 
+try {
     # Move into run folder
     Write-Output "LMP: Moving into $runFldName."
     Set-Location $runFldName
@@ -90,7 +91,7 @@ try {
         Throw "LMP: Could not move into $runFldName."
     }
 
-    # If SpriteMaker is enabled
+    # IF SpriteMaker is enabled
     if ($config.spriteMaker -ne $null -and $config.spriteMaker.isEnabled) {
         Write-Output "LMP: Generating sprites with SpriteMaker."
         Invoke-Expression "$($config.spriteMaker.executablePath) -subdirs -nologfile $($config.spriteMaker.imagesFolderPath) $($config.assetsFolderPath)/sprites"
@@ -99,7 +100,7 @@ try {
         }
     }
 
-    # If WadMaker is enabled
+    # IF WadMaker is enabled
     if ($config.wadMaker -ne $null -and $config.wadMaker.isEnabled) {
         Write-Output "LMP: Updating $($config.wadMaker.wadToBuildFilename)."
         Invoke-Expression "$($config.wadMaker.executablePath) $($clean ? "-full" : " ") -subdirs -nologfile $($config.wadMaker.imagesFolderPath) $($config.assetsFolderPath)/$($config.wadMaker.wadToBuildFilename)"
@@ -123,11 +124,11 @@ try {
     #     }
     # }
 
-    # If the input file is an .rmf file, export it to map.
     if ($inputFileExtension -ceq "rmf") {
+        # IF the input map is an RMF file, export it to map.
         Write-Output "LMP: Using MESS to export $mapName.rmf to $mapName.map."
 
-        if ($config.mess -eq $null -or $config.mess.executablePath -eq $null) {
+        if ($config.mess -eq $null) {
             Throw "LMP: A MESS executable MUST be specified in the configuration file to export the RMF to .map."
         }
 
@@ -138,7 +139,7 @@ try {
         }
 
         # Run MESS on the input RMF file
-        if ($config.mess.templatesFolderPath -ne $null) {
+        if ($config.mess.templatesFolderPath -ne $null -and $config.mess.transformMapFiles) {
             Invoke-Expression "$($config.mess.executablePath) -dir $($config.mess.templatesFolderPath) -log verbose $mapName.rmf $mapName.map"
         } else {
             Invoke-Expression "$($config.mess.executablePath) -log verbose $mapName.rmf $mapName.map"
@@ -155,12 +156,10 @@ try {
             }
         } | Set-Content "$mapName.map"
         if (!$?) {
-            throw 'LMP: Failed to add the WADs to the MAP file.'
+            throw 'LMP: Failed to add the WAD files to the MAP file.'
         }
-    }
-
-    # Run MESS if MESS executable is specified and if it wasn’t run during rmf export to map
-    if ($config.mess -ne $null -and $config.mess.transformMapFiles -ne $null -and $inputFileExtension -cne "rmf") {
+    } elseif ($config.mess -ne $null -and $config.mess.transformMapFiles -eq $true -and $inputFileExtension -cne "map") {
+        # IF the input map is a MAP file and the MESS executable is specified and transformMapFiles is set to true, run MESS on MAP file
         Write-Output "LMP: Running MESS on $mapName.map."
         if ($config.mess.templatesFolderPath -ne $null) {
             Invoke-Expression "$($config.mess.executablePath) -dir $($config.mess.templatesFolderPath) $($config.mess.params) $mapName"
@@ -172,14 +171,17 @@ try {
         }
     }
 
-    # Disable mm_devmapstart when removeDevEntities is enabled
-    if ($config.removeDevEntities -eq $true) {
-        Write-Output "LMP: Renaming mm_devmapstart to mm_devmapstart_dis to disable it (not in dev mode)."
-        (Get-Content "$mapName.map") -Replace '"targetname" "mm_devmapstart"', '"targetname" "mm_devmapstart_dis"' | Set-Content "$mapName.map"
-    }
 
-    # Compile the map if input file isn’t a .bsp file.
+
+    # IF the input map isn’t a BSP file
     if (-not ($inputFileExtension -ceq "bsp")) {
+        # IF removeDevEntities is set to true, disable mm_devmapstart
+        if ($config.removeDevEntities -eq $true -and (-not ($inputFileExtension -ceq "bsp"))) {
+            Write-Output "LMP: Renaming mm_devmapstart to mm_devmapstart_dis to disable it (not in dev mode)."
+            (Get-Content "$mapName.map") -Replace '"targetname" "mm_devmapstart"', '"targetname" "mm_devmapstart_dis"' | Set-Content "$mapName.map"
+        }
+
+        # Compile the map
         Write-Output "LMP: Compiling the map."
 
         if (Test-Path -LiteralPath "$inputMapFld/$mapName.rad") {
@@ -209,7 +211,7 @@ try {
         }
     }
 
-    # Create build folder
+    # Create build folder and move into it
     Write-Output "LMP: Creating build folder."
     New-Item -Name "build" -Force -ItemType Directory
     Set-Location "build"
@@ -230,25 +232,45 @@ try {
         Write-Output "LMP: Copying assets used by the map into the build folder using Resguy."
 
         Copy-Item -LiteralPath $config.resguy.ignoreFilePath -Force
-        Invoke-Expression "$($config.resguy.executablePath) $mapName -extra -missing" > $null
+        Invoke-Expression "$($config.resguy.executablePath) $mapName -extra -missing" > "..\resguy_all.log"
         if (!$?) {
             Throw 'LMP: Resguy failed generating a .RES file on the first run.'
         }
 
+        if ($config.additionalAssets -ne $null) {
+            Write-Output "LMP: Copying additional assets."
+            foreach ($asset in $config.additionalAssets) {
+                New-Item -Path ([regex]::match($asset, '^[\w/]+/').Groups[0].Value) -Force -ItemType Directory
+                Copy-Item -LiteralPath "$($config.assetsFolderPath)/$asset" -Destination $asset -Force
+                if (!$?) {
+                    Throw "LMP: Failed copying $asset into build folder."
+                }
+                Write-Output "LMP: Copied $asset into build folder."
+            }
+            Write-Output "LMP: Done copying additional assets."
+        }
+
         if (Test-Path -Path "maps/$mapName.res") {
             foreach ($l in Get-Content -Path "maps/$mapName.res") {
-                if (!($l -match '^\w+\.(bsp|res)$')) {
-                    if ($l -match '^\w+\.wad$') {
+                if ($l -match '^([a-zA-Z0-9_]+\/)*[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$') {
+                    if ($l -match '^[a-zA-Z0-9_]+\.wad$') {
                         Copy-Item -LiteralPath "../$l" -Force
-                    } elseif ($l -match '^\w+') {
+                        if (!$?) {
+                            Throw "LMP: Failed to copy WAD file $l into the build folder."
+                        }
+                    } elseif (($l -ceq "maps/$mapName.bsp") -or ($l -ceq "maps/$mapName.res")) {
+                        Write-Output "LMP: Ignoring $l"
+                    } else {
                         New-Item -Path ([regex]::match($l, '^[\w/]+/').Groups[0].Value) -Force -ItemType Directory
                         Copy-Item -LiteralPath "$($config.assetsFolderPath)/$l" -Destination $l -Force
+                        if (!$?) {
+                            Throw "LMP: Failed to copy $l into the build folder."
+                        }
                     }
-                    Throw "LMP: Failed to copy $l into the build folder."
                 }
             }
         } else {
-            Write-Output "LMP: No assets were copied because the map doesn’t use any."
+            Write-Output "LMP: No RES assets were copied because the map doesn’t use any."
         }
 
         # Re-generate the RES file without admin files and let Resguy detect missing files.
@@ -259,7 +281,7 @@ try {
         Get-Content "..\resguy.log"
 
         Remove-Item ([regex]::match($config.resguy.ignoreFilePath, '\w+\.txt$').Groups[0].Value)
-        Write-Output "LMP: Done with copying assets into the build folder. Check the resguy.log file for more information."
+        Write-Output "LMP: Done with copying RES assets into the build folder. Check the resguy.log file for more information."
     }
 
     # If the config specifies a file to which the build must be copied
