@@ -28,8 +28,7 @@
         "description": "Optional. If specified, generates or updates the specified WAD file before build.",
         "isEnabled": false,
         "executablePath": null,
-        "imagesFolderPath": null,
-        "wadToBuildFilename": null
+        "wadsToBuild": null
     },
     "compilers": {
         "description": "MANDATORY if given file is of the RMF or MAP file format.",
