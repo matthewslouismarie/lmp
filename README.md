@@ -1,19 +1,45 @@
 # LMP
 
-LMP is a utility that aims to streamline the process of packaging a map and its assets. It can easily be configured to meet varied needs.
+LMP is a simple command-line utility that automates the cumbersome, error-prone process of compiling and packaging a map. It can easily be configured to meet varied needs.
+
+![LMP workflow](lmp.webp)
+
+## List of features
+
+The following features can all be used at the same time, or activated separately. It depends on the configuration files passed to LMP.
+
+ - Compiling the map.
+ - Copying all the assets the map uses into a separate build folder, ignoring assets already included with the game.
+ - Automatically updating the Wads using WadMaker before compilation.
+ - Automatically updating the sprites using SpriteMaker before compilation.
+ - Exporting the map from .rmf to .map using [MESS](https://github.com/pwitvoet/mess), or use existing .map file.
+ - Copying the map and its assets into the game folder.
+ - Running MESS, allowing the use of [MESS](https://github.com/pwitvoet/mess) templates inside the map.
+ - Using the default configuration, customising only the settings you need to change in one or more separate JSON files.
 
 ## Running LMP
 
-After the quick task of configuring LMP (see following section), you can run ``path\to\lmp.ps1 mymap.rmf``. This will compile your map and put it, along all the custom assets it uses (excluding base ones already shipped with the game it is meant for), into a separate build folder.
+After the quick task of configuring LMP (see following section), you can run ``path\to\lmp.ps1 mymap.rmf``. This will compile your map, build your custom used assets, and put them (excluding base assets already included with the game, and the ones not used by the map), into a separate build folder.
 
 > :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
-## Minimum settings
+### -clean
 
-You MUST configure it before using it. In order to do that, copy the ``default.lmp.json.example`` file and rename it to ``default.lmp.json``. Then modify it. You must provide at the very least the correct paths for the compilers.
+By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap.rmf -clean``.
+
+> This makes sure no files from any previous run is kept, leading to a lower build folder size. It is recommended for final releases.
+
+## Basic configuration
+
+There are a few settings that must be configured before running LMP for the first time.
+
+You MUST configure LMP before using it. In order to do that, copy the ``default.lmp.json.example`` file and rename it to ``default.lmp.json``. Then modify it.
+
+### "compilers"
+
+You must provide at the very least the correct paths for the compilers.
 
     "compilers": {
-        // …
         "bspExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-BSP_x64.exe",
         "csgExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-CSG_x64.exe",
         "radExecutablePath": "C:/Users/user/Documents/crossedpaths/compilers/SC-RAD_x64.exe",
@@ -23,29 +49,36 @@ You MUST configure it before using it. In order to do that, copy the ``default.l
 
 > All paths must use forward slashes "/" (and not backslashes "\").
 
-You also must set ``assetsFolderPath`` and the ``list`` in ``wadsUsedByMap``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any base assets in ``assetsFolderPath``, apart from the WAD files your map uses. (Even base WADs must be included in this directory.)
+### "assetsFolderPath" and "wadsUsedByMap"
+
+You also must set ``assetsFolderPath``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any base assets in ``assetsFolderPath``, **apart from the WAD used by your map**. (All the WADs must be included in this directory, this is because they are required for compilation.)
+
+Specify the list of all of the WAD files in the ``list`` in ``wadsUsedByMap``
+
+    "wadsUsedByMap": {
+        "description": "MANDATORY.",
+        "list": [
+            "halflife.wad"
+        ]
+    }
+
+### MESS and Resguy
 
 It is also heavily recommended to provide a path for [MESS](https://github.com/pwitvoet/mess/releases/tag/1.1) and [Resguy](https://github.com/wootguy/resguy/releases). Download those if you don’t have them, then specify their paths in ``default.lmp.json``.
 
     "mess": {
         // …
-        "executablePath": "C:/Users/l/Documents/crossedpaths/mess_1_2/MESS.exe",
+        "executablePath": "C:/Users/user/Documents/crossedpaths/mess_1_2/MESS.exe",
         // …
     },
     // …
     "resguy": {
         // …
-        "executablePath": "C:/Users/l/Documents/resguy_v9_windows_x64/resguy.exe",
-        "ignoreFilePath": "C:/Users/l/Documents/resguy_v9_windows_x64/resguy_default_content.txt"
+        "executablePath": "C:/Users/user/Documents/resguy_v9_windows_x64/resguy.exe",
+        "ignoreFilePath": "C:/Users/user/Documents/resguy_v9_windows_x64/resguy_default_content.txt"
     },
 
 MESS allows LMP to export your RMF directly into a MAP file and Resguy allows LMP to copy all the custom assets the map uses into a new build folder.
-
-## -clean
-
-By specifying the ``-clean`` parameter to LMP, you force LMP to use a brand new folder for this run.: ``path\to\lmp.ps1 mymap.rmf -clean``.
-
-> This makes sure no files from any previous run is kept, leading to a lower build folder size. It is recommended for final releases.
 
 ## Additional settings
 
@@ -65,6 +98,8 @@ You can also create any number of arbitrary JSON configuration files and pass th
         }
     }
 
+You can pass as many configuration files as you want. If a setting is defined twice, the configuration file that was specified list will have priority.
+
 ### Updating assets before build
 
 You can configure LMP to update your Wad before build as well as to update your sprites. See [WadMaker and SpriteMaker](https://github.com/pwitvoet/wadmaker) for their respective documentation.
@@ -72,14 +107,14 @@ You can configure LMP to update your Wad before build as well as to update your 
     "spriteMaker": {
         // …
         "isEnabled": true,
-        "executablePath": "C:/Users/l/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/SpriteMaker.exe",
-        "imagesFolderPath": "C:/Users/l/Documents/images/sprites"
+        "executablePath": "C:/Users/user/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/SpriteMaker.exe",
+        "imagesFolderPath": "C:/Users/user/Documents/images/sprites"
     },
     "wadMaker": {
         // …
         "isEnabled": true,
-        "executablePath": "C:/Users/l/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/WadMaker.exe",
-        "imagesFolderPath": "C:/Users/l/Documents/images/textures",
+        "executablePath": "C:/Users/user/Documents/crossedpaths/WadMaker_SpriteMaker_1.2/WadMaker.exe",
+        "imagesFolderPath": "C:/Users/user/Documents/images/textures",
         "wadToBuildFilename": "mywad.wad"
     },
 
@@ -102,21 +137,9 @@ If you also want to use the MESS templating engine, specify the other MESS set
 
     "mess": {
         // …
-        "templatesFolderPath": "C:/Users/l/Documents/rmf/templates", // if you use MESS external templates
+        "templatesFolderPath": "C:/Users/user/Documents/rmf/templates", // if you use MESS external templates
         "transformMapFiles": true
     },
-
-## List of features
-
-The following features can all be used at the same time, or activated separately. It depends on the configuration files passed to LMP.
-
- - Compile the map.
- - Copy all the assets the map uses into a separate build folder, ignoring assets shipped with the game.
- - Copy the map and its assets into the game folder.
- - Export the map from .rmf to .map using MESS, or use existing .map file.
- - Run MESS, allowing the use of MESS templates inside the map.
- - Automatically update the Wads using WadMaker before compilation.
- - Automatically update the sprites using SpriteMaker before compilation.
 
 ## Performance
 
@@ -126,4 +149,3 @@ Running compilation from a script is more efficient than running it from the map
 
  - Add option to automatically compile models before compilation.
  - Add GUI.
-
