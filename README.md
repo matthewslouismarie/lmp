@@ -15,13 +15,15 @@ The following features can all be used at the same time, or activated separately
  - Exporting the map from .rmf to .map using [MESS](https://github.com/pwitvoet/mess), or use existing .map file.
  - Copying the map and its assets into the game folder.
  - Running MESS, allowing the use of [MESS](https://github.com/pwitvoet/mess) templates inside the map.
- - Using the default configuration, customising only the settings you need to change in one or more separate JSON files.
+ - Using the default configuration, customising only the settings you need to change in one or more separate JSON files. This allows you to have a configuration specific to one map, to a map series, to all of your maps, or to combine several of these, only overriding the relevant settings.
 
 ## Running LMP
 
 After the quick task of configuring LMP (see following section), you can run ``path\to\lmp.ps1 mymap.rmf``. This will compile your map, build your custom used assets, and put them (excluding base assets already included with the game, and the ones not used by the map), into a separate build folder.
 
-> :warning: You need PowerShell 7 to run the script (``winget install --id Microsoft.Powershell --source winget``). You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
+
+> :warning: You need **PowerShell 7** to run the script (``winget install --id Microsoft.Powershell --source winget``). Make sure you run it with PowerShell 7, and not just PowerShell (which remains installed even after installing PowerShell 7).
+You also need to allow the execution of custom scripts using ``Set-ExecutionPolicy unrestricted``.
 
 ### -clean
 
@@ -51,7 +53,7 @@ You must provide at the very least the correct paths for the compilers.
 
 ### "assetsFolderPath" and "wadsUsedByMap"
 
-You also must set ``assetsFolderPath``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any base assets in ``assetsFolderPath``, **apart from the WAD used by your map**. (All the WADs must be included in this directory, this is because they are required for compilation.)
+You also must set ``assetsFolderPath``. LMP will look for the WADs and the other assets your map uses into this directory, and copy the ones not already shipped with the base game or mod into the build folder. You do not need to have any assets already included in the game in the folder specified in ``assetsFolderPath``, **apart from the WAD used by your map**. (All the WADs must be included in this directory, this is because they are required for compilation.)
 
 Specify the list of all of the WAD files in the ``list`` in ``wadsUsedByMap``
 
@@ -86,7 +88,19 @@ If you have any question, just look up the ``default.example.lmp.json`` file for
 
 ### Creating a configuration file specific to your map
 
-If you do not want to modify the global ``default.lmp.json``, you can create a secondary JSON file containing only the settings you want to override. You then only need to put it into the same folder as your map with the name ``yourmap.lmp.json``.
+If you do not want to modify the global ``default.lmp.json`` because your settings only apply to one map, you can create a secondary JSON file containing only the settings you want to override. You then only need to put it into the same folder as your map with the name ``yourmap.lmp.json``.
+
+For instance:
+
+    {
+        "assetsFolderPath": "C:/Users/user/maps/yourmap",
+        "wadsUsedByMap": {
+            "list": [
+                "halflife.wad",
+                "yourmap.wad"
+            ]
+        }
+    }
 
 ### Creating a configuration file for certain profiles (fast compile, release build, etc.)
 
@@ -117,6 +131,24 @@ You can configure LMP to update your Wad before build as well as to update your 
         "imagesFolderPath": "C:/Users/user/Documents/images/textures",
         "wadToBuildFilename": "mywad.wad"
     },
+
+### Scripts
+
+Scripts are not detected by Resgen, so you need to specify them manually.
+
+    "additionalAssets": [
+        "maps/crossedpaths2a.cfg",
+        "maps/crossedpaths3a.cfg",
+        "scripts/maps/crossedpaths2a/asscart.as",
+        "scripts/maps/crossedpaths2a/crossedpaths2.as",
+        "scripts/maps/crossedpaths2a/laseractivation.as",
+        "scripts/maps/crossedpaths2a/mbg.as",
+        "scripts/maps/crossedpaths2a/rmg.as",
+        "scripts/maps/crossedpaths3a/crossedpaths3.as",
+        "scripts/maps/lm/hotmachinegun.as",
+        "scripts/maps/lm/messages.as",
+        "scripts/maps/lm/towerofhanoi.as"
+    ],
 
 ### Copying build to the game folder
 
